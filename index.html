@@ -106,7 +106,7 @@ video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString('fa-IR');
 let products=JSON.parse(localStorage.getItem('ghermarket_products')||'[]');
-let cart=[],codeReader=null,scanMode='sale',selectedProduct=null;
+let cart=[],codeReader=null,scanMode='sale',selectedProduct=null,lastScannedCode='',lastScannedAt=0;
 
 function persist(){
   localStorage.setItem('ghermarket_products',JSON.stringify(products));
@@ -138,12 +138,12 @@ function editProduct(i){
 }
 function findSaleProduct(){
   const code=$('saleBarcode').value.trim();
-  if(!code){alert('بارکد را وارد یا اسکن کنید.');return}
+  if(!code){selectedProduct=null;$('foundProduct').innerHTML='';return false}
   const p=products.find(x=>String(x.barcode)===code);
   if(!p){
     selectedProduct=null;
     $('foundProduct').innerHTML='<div class="product-found">کالایی با این کد پیدا نشد. ابتدا آن را در بخش «افزودن کالا» ثبت کنید.</div>';
-    return;
+    return false;
   }
   selectedProduct=p;
   $('foundProduct').innerHTML=`<div class="product-found">
@@ -151,25 +151,62 @@ function findSaleProduct(){
     <span class="pill">قیمت: ${fmt(p.price)} تومان</span>
     <span class="pill">موجودی: ${fmt(p.stock)}</span>
     <div class="small">کد کالا: ${esc(p.barcode)}</div>
-    <button onclick="addSelectedToCart()">افزودن به فاکتور</button>
   </div>`;
+  return true;
 }
 function addSelectedToCart(){
-  if(!selectedProduct){findSaleProduct();return}
+  if(!selectedProduct){
+    if(!findSaleProduct())return false;
+  }
   const p=products.find(x=>String(x.barcode)===String(selectedProduct.barcode));
-  if(!p){alert('این کالا در فهرست پیدا نشد.');return}
+  if(!p){
+    selectedProduct=null;
+    $('foundProduct').innerHTML='<div class="product-found">این کالا در فهرست پیدا نشد.</div>';
+    return false;
+  }
   const q=Math.max(1,Math.floor(Number($('qty').value)||1));
   const item=cart.find(x=>String(x.barcode)===String(p.barcode));
   const already=item?item.qty:0;
-  if(already+q>p.stock){alert('موجودی کافی نیست. موجودی باقی‌مانده: '+fmt(Math.max(0,p.stock-already)));return}
+  if(already+q>p.stock){
+    if($('scanner').style.display!=='none')$('status').textContent='موجودی کافی نیست؛ موجودی باقی‌مانده: '+fmt(Math.max(0,p.stock-already));
+    else alert('موجودی کافی نیست. موجودی باقی‌مانده: '+fmt(Math.max(0,p.stock-already)));
+    return false;
+  }
   if(item)item.qty+=q;
   else cart.push({barcode:p.barcode,name:p.name,price:Number(p.price)||0,qty:q});
   renderCart();
   $('saleBarcode').value='';$('qty').value='1';$('foundProduct').innerHTML='';
   selectedProduct=null;
+  if($('scanner').style.display!=='none')$('status').textContent='دینگ! '+p.name+' به فاکتور اضافه شد؛ بارکد کالای بعدی را اسکن کنید.';
+  return true;
+}
+let scanAudioContext=null;
+function playBeep(){
+  try{
+    const ctx=scanAudioContext;
+    if(!ctx)return;
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+    const osc=ctx.createOscillator(),gain=ctx.createGain();
+    const t=ctx.currentTime;
+    osc.type='triangle';
+    osc.frequency.setValueAtTime(1140,t);
+    gain.gain.setValueAtTime(0.0001,t);
+    gain.gain.exponentialRampToValueAtTime(0.30,t+0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start(t);osc.stop(t+0.15);
+  }catch(e){}
 }
 async function startScan(mode='sale'){
-  scanMode=mode;
+  if(codeReader){stopScan()}
+  scanMode=mode;lastScannedCode='';lastScannedAt=0;
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(AudioCtx){
+      if(!scanAudioContext)scanAudioContext=new AudioCtx();
+      if(scanAudioContext.state==='suspended')await scanAudioContext.resume();
+    }
+  }catch(e){}
   if(!window.ZXing||!ZXing.BrowserMultiFormatReader){
     alert('کتابخانه اسکن بارگذاری نشد. اینترنت گوشی را بررسی کنید و دوباره تلاش کنید.');return;
   }
@@ -184,24 +221,35 @@ async function startScan(mode='sale'){
     const hints=new Map();
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,formats);
     hints.set(ZXing.DecodeHintType.TRY_HARDER,false);
-    codeReader=new ZXing.BrowserMultiFormatReader(hints,180);
+    codeReader=new ZXing.BrowserMultiFormatReader(hints,160);
     await codeReader.decodeFromVideoDevice(undefined,$('video'),(result,error)=>{
-      if(result){
-        const value=String(result.getText()||'').trim();
-        if(!value)return;
-        stopScan();
-        if(scanMode==='product'){
-          $('barcode').value=value;
-          const existing=products.find(x=>String(x.barcode)===value);
-          if(existing){$('name').value=existing.name;$('price').value=existing.price;$('stock').value=existing.stock}
-          $('status').textContent='کد خوانده شد.';
+      if(!result)return;
+      const value=String(result.getText()||'').trim();
+      if(!value)return;
+      const now=Date.now();
+      if(value===lastScannedCode && now-lastScannedAt<1800)return;
+      lastScannedCode=value;lastScannedAt=now;
+      playBeep();
+      if(scanMode==='product'){
+        $('barcode').value=value;
+        const existing=products.find(x=>String(x.barcode)===value);
+        if(existing){
+          $('name').value=existing.name;$('price').value=existing.price;$('stock').value=existing.stock;
+          $('status').textContent='دینگ! کالای ثبت‌شده پیدا شد: '+existing.name+'؛ برای اسکن بعدی بارکد دیگری روبه‌روی دوربین بگیرید.';
         }else{
-          $('saleBarcode').value=value;
-          findSaleProduct();
+          $('name').value='';
+          $('status').textContent='دینگ! کد خوانده شد؛ نام، قیمت و موجودی را وارد و ذخیره کنید. برای اسکن بعدی دوربین باز می‌ماند.';
+        }
+      }else{
+        $('saleBarcode').value=value;
+        if(findSaleProduct()){
+          if(!addSelectedToCart())$('status').textContent='کالا پیدا شد، اما به فاکتور اضافه نشد؛ موجودی را بررسی کنید.';
+        }else{
+          $('status').textContent='این بارکد در فهرست کالاها ثبت نشده است؛ ابتدا کالا را ثبت کنید.';
         }
       }
     });
-    $('status').textContent='QR یا بارکد را داخل کادر بگیرید و کمی ثابت نگه دارید.';
+    $('status').textContent='دوربین آماده است؛ QR یا بارکد را مقابل دوربین بگیرید.';
   }catch(e){
     $('status').textContent='اسکن شروع نشد: '+(e.message||e);
     stopScan();
