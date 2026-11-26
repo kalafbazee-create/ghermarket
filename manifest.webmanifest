@@ -1,10 +1,10 @@
 {
-  "name": "گهر مارکت - فروش و فاکتور",
+  "name": "گهر مارکت",
   "short_name": "گهر مارکت",
-  "lang": "fa",
-  "dir": "rtl",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f3f6f4",
-  "theme_color": "#176b55"
+  "theme_color": "#176b52",
+  "lang": "fa",
+  "dir": "rtl"
 }
