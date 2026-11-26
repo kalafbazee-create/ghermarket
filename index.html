@@ -38,7 +38,12 @@ video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:
 </head>
 <body>
 <header><h1>گهر مارکت</h1><div>مدیریت کالا و فروش</div></header>
+<nav class="row" style="max-width:760px;margin:12px auto 0;padding:0 14px">
+<button id="tabProducts" onclick="showPage('productsPage')">مدیریت محصولات</button>
+<button id="tabInvoice" class="secondary" onclick="showPage('invoicePage')">صدور فاکتور</button>
+</nav>
 <main>
+<div id="productsPage">
 <section class="card">
 <h2>افزودن یا ویرایش کالا</h2>
 <label>بارکد یا شناسه کالا</label>
@@ -63,9 +68,11 @@ video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:
 <h2>فهرست کالاها</h2>
 <div id="products"></div>
 </section>
+</div>
 
+<div id="invoicePage" style="display:none">
 <section class="card">
-<h2>فاکتور فروش</h2>
+<h2>صدور فاکتور</h2>
 <label>اسکن یا وارد کردن بارکد کالا</label>
 <div class="row">
 <input id="saleBarcode" placeholder="بارکد کالا">
@@ -82,8 +89,10 @@ video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:
 <button class="secondary" onclick="printInvoice()">چاپ فاکتور</button>
 </section>
 
+</div>
+
 <section class="card">
-<h2>پشتیبان‌گیری</h2>
+<h2>پشتیبان‌گیری و بازیابی</h2>
 <button class="secondary" onclick="backup()">دانلود پشتیبان اطلاعات</button>
 <label>بازیابی فایل پشتیبان</label>
 <input type="file" id="restoreFile" accept="application/json" onchange="restore(event)">
@@ -242,7 +251,15 @@ function restore(e){
   };
   r.readAsText(f);
 }
-renderProducts();renderCart();
+function showPage(id){
+  $('productsPage').style.display=id==='productsPage'?'block':'none';
+  $('invoicePage').style.display=id==='invoicePage'?'block':'none';
+  $('tabProducts').className=id==='productsPage'?'':'secondary';
+  $('tabInvoice').className=id==='invoicePage'?'':'secondary';
+  stopScan();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+renderProducts();renderCart();showPage('productsPage');
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
