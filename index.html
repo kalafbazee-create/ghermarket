@@ -1,103 +1,36 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
-<head>
+<html lang="fa" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#176b52"><link rel="manifest" href="manifest.webmanifest">
 <title>گهر مارکت</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f3f6f4;color:#17231e;font-family:Tahoma,Arial,sans-serif}
-header{background:#176b52;color:white;padding:18px;text-align:center}header h1{margin:0 0 6px;font-size:23px}
-main{max-width:760px;margin:auto;padding:14px}.card{background:white;border-radius:14px;padding:15px;margin:12px 0;box-shadow:0 2px 9px #0000000d}
-h2{font-size:18px;margin:0 0 12px}label{display:block;font-size:14px;margin:9px 0 5px}
-input{width:100%;padding:12px;border:1px solid #ccd6d0;border-radius:9px;font-size:16px}
-button{border:0;border-radius:9px;padding:11px 14px;background:#176b52;color:white;font-size:15px;margin:5px 3px;cursor:pointer}
-button.secondary{background:#e6efea;color:#174d3c}button.danger{background:#a93434}
-.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
-table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:9px 5px;border-bottom:1px solid #e6ece8;text-align:right}
-.small{font-size:13px;color:#52645a}.total{font-weight:bold;font-size:19px}
-#scanner{display:none}video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:cover}
-#status{padding:9px;background:#f0f5f2;border-radius:8px;font-size:13px}
-</style></head>
-<body>
-<header><h1>گهر مارکت</h1><div>مدیریت کالا و فروش</div></header>
-<main>
-<section class="card">
-<h2>افزودن یا ویرایش کالا</h2>
-<label>بارکد یا شناسه کالا</label><div class="row"><input id="barcode" placeholder="بارکد را وارد یا اسکن کنید"><button onclick="startScan()">اسکن QR</button></div>
-<div id="scanner" class="card"><video id="video" playsinline></video><div id="status">دوربین را مقابل QR Code بگیرید.</div><button class="secondary" onclick="stopScan()">بستن دوربین</button></div>
-<label>نام کالا</label><input id="name" placeholder="مثلاً نوشابه">
-<div class="row"><div><label>قیمت فروش (تومان)</label><input id="price" type="number" min="0"></div><div><label>موجودی</label><input id="stock" type="number" min="0"></div></div>
-<button onclick="saveProduct()">ذخیره کالا</button>
-</section>
+*{box-sizing:border-box}body{margin:0;background:#f3f6f4;color:#17231e;font-family:Tahoma,Arial,sans-serif}header{background:#176b52;color:white;padding:18px;text-align:center}header h1{margin:0 0 6px;font-size:23px}main{max-width:760px;margin:auto;padding:14px}.card{background:white;border-radius:14px;padding:15px;margin:12px 0;box-shadow:0 2px 9px #0000000d}h2{font-size:18px;margin:0 0 12px}label{display:block;font-size:14px;margin:9px 0 5px}input{width:100%;padding:12px;border:1px solid #ccd6d0;border-radius:9px;font-size:16px}button{border:0;border-radius:9px;padding:11px 14px;background:#176b52;color:white;font-size:15px;margin:5px 3px;cursor:pointer}button.secondary{background:#e6efea;color:#174d3c}button.danger{background:#a93434}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:9px 5px;border-bottom:1px solid #e6ece8;text-align:right}.small{font-size:13px;color:#52645a}.total{font-weight:bold;font-size:19px}#scanner{display:none}video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:cover}
+</style></head><body>
+<header><h1>گهر مارکت</h1><div>مدیریت کالا و فروش</div></header><main>
+<section class="card"><h2>افزودن یا ویرایش کالا</h2>
+<label>بارکد یا شناسه کالا</label><div class="row"><input id="barcode" placeholder="بارکد را وارد یا اسکن کنید"><button onclick="startScan()">اسکن QR و بارکد</button></div>
+<div id="scanner" class="card"><video id="video" playsinline></video><div id="status" class="small">کد را مقابل دوربین بگیرید.</div><button class="secondary" onclick="stopScan()">بستن دوربین</button></div>
+<label>نام کالا</label><input id="name" placeholder="مثلاً نوشابه"><div class="row"><div><label>قیمت فروش (تومان)</label><input id="price" type="number" min="0"></div><div><label>موجودی</label><input id="stock" type="number" min="0"></div></div><button onclick="saveProduct()">ذخیره کالا</button></section>
 <section class="card"><h2>فهرست کالاها</h2><div id="products"></div></section>
-<section class="card"><h2>ثبت فروش</h2>
-<label>بارکد کالا</label><input id="saleBarcode" placeholder="بارکد را وارد کنید">
-<div class="row"><div><label>تعداد</label><input id="qty" type="number" min="1" value="1"></div><div style="align-self:end"><button onclick="addToCart()">افزودن به فاکتور</button></div></div>
-<div id="cart"></div><div class="total" id="sum">جمع: ۰ تومان</div>
-<button onclick="checkout()">ثبت نهایی فروش</button><button class="secondary" onclick="printInvoice()">چاپ فاکتور</button>
-</section>
+<section class="card"><h2>ثبت فروش</h2><label>بارکد کالا</label><input id="saleBarcode" placeholder="بارکد را وارد کنید"><div class="row"><div><label>تعداد</label><input id="qty" type="number" min="1" value="1"></div><div style="align-self:end"><button onclick="addToCart()">افزودن به فاکتور</button></div></div><div id="cart"></div><div class="total" id="sum">جمع: ۰ تومان</div><button onclick="checkout()">ثبت نهایی فروش</button><button class="secondary" onclick="printInvoice()">چاپ فاکتور</button></section>
 <section class="card"><h2>پشتیبان‌گیری</h2><button class="secondary" onclick="backup()">دانلود پشتیبان اطلاعات</button><label>بازیابی فایل پشتیبان</label><input type="file" id="restoreFile" accept="application/json" onchange="restore(event)"><p class="small">اطلاعات روی همین مرورگر و همین دستگاه ذخیره می‌شود.</p></section>
 </main>
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
-const $=id=>document.getElementById(id);
-let products=JSON.parse(localStorage.getItem('ghermarket_products')||'[]');
-let cart=[], stream=null, scanTimer=null, detector=null;
-const fmt=n=>Number(n||0).toLocaleString('fa-IR');
+const $=id=>document.getElementById(id),fmt=n=>Number(n||0).toLocaleString('fa-IR');
+let products=JSON.parse(localStorage.getItem('ghermarket_products')||'[]'),cart=[],codeReader=null;
 function persist(){localStorage.setItem('ghermarket_products',JSON.stringify(products));renderProducts()}
-function saveProduct(){
- const barcode=$('barcode').value.trim(),name=$('name').value.trim(),price=Number($('price').value),stock=Number($('stock').value);
- if(!barcode||!name){alert('بارکد و نام کالا را وارد کنید.');return}
- let p=products.find(x=>x.barcode===barcode);
- if(p){p.name=name;p.price=price;p.stock=stock}else products.push({barcode,name,price,stock});
- persist();alert('کالا ذخیره شد.');$('barcode').value=$('name').value=$('price').value=$('stock').value='';
-}
-function renderProducts(){
- if(!products.length){$('products').innerHTML='<p class="small">هنوز کالایی ثبت نشده است.</p>';return}
- $('products').innerHTML='<table><tr><th>نام</th><th>بارکد</th><th>قیمت</th><th>موجودی</th><th></th></tr>'+products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.barcode)}</td><td>${fmt(p.price)}</td><td>${fmt(p.stock)}</td><td><button class="secondary" onclick="editProduct(${i})">ویرایش</button></td></tr>`).join('')+'</table>';
-}
+function saveProduct(){let barcode=$('barcode').value.trim(),name=$('name').value.trim(),price=Number($('price').value),stock=Number($('stock').value);if(!barcode||!name){alert('بارکد و نام کالا را وارد کنید.');return}let p=products.find(x=>x.barcode===barcode);if(p){p.name=name;p.price=price;p.stock=stock}else products.push({barcode,name,price,stock});persist();alert('کالا ذخیره شد.');$('barcode').value=$('name').value=$('price').value=$('stock').value=''}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderProducts(){if(!products.length){$('products').innerHTML='<p class="small">هنوز کالایی ثبت نشده است.</p>';return}$('products').innerHTML='<table><tr><th>نام</th><th>بارکد</th><th>قیمت</th><th>موجودی</th><th></th></tr>'+products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.barcode)}</td><td>${fmt(p.price)}</td><td>${fmt(p.stock)}</td><td><button class="secondary" onclick="editProduct(${i})">ویرایش</button></td></tr>`).join('')+'</table>'}
 function editProduct(i){let p=products[i];$('barcode').value=p.barcode;$('name').value=p.name;$('price').value=p.price;$('stock').value=p.stock;window.scrollTo({top:0,behavior:'smooth'})}
-async function startScan(){
- if(!('BarcodeDetector' in window)){alert('این نسخه کروم قابلیت تشخیص QR را در این دستگاه پشتیبانی نمی‌کند. از ورود دستی شناسه استفاده کنید.');return}
- try{
-  let supported=await BarcodeDetector.getSupportedFormats();
-  const wanted=['qr_code','ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','codabar'];
-  const formats=wanted.filter(x=>supported.includes(x));
-  if(!formats.length){alert('این مرورگر از اسکن QR یا بارکد خطی پشتیبانی نمی‌کند.');return}
-  detector=new BarcodeDetector({formats});
-  $('scanner').style.display='block';$('status').textContent='در حال باز کردن دوربین...';
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-  $('video').srcObject=stream;await $('video').play();
-  $('status').textContent='QR Code را کامل داخل تصویر نگه دارید.';
-  scanLoop();
- }catch(e){$('status').textContent='دوربین باز نشد: '+e.message;stopScan()}
-}
-async function scanLoop(){
- if(!stream)return;
- try{
-  if($('video').readyState>=2){
-   const found=await detector.detect($('video'));
-   if(found.length){
-    const value=String(found[0].rawValue||'').trim();
-    if(value){$('barcode').value=value;$('saleBarcode').value=value;$('status').textContent='QR خوانده شد.';stopScan();return}
-   }
-  }
- }catch(e){}
- scanTimer=setTimeout(scanLoop,250);
-}
-function stopScan(){if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('scanner').style.display='none'}
-function addToCart(){
- let code=$('saleBarcode').value.trim(),p=products.find(x=>x.barcode===code),q=Math.max(1,Number($('qty').value)||1);
- if(!p){alert('کالایی با این بارکد پیدا نشد.');return}
- if(q>p.stock){alert('موجودی کافی نیست.');return}
- let item=cart.find(x=>x.barcode===code);if(item)item.qty+=q;else cart.push({barcode:code,name:p.name,price:p.price,qty:q});
- renderCart();$('saleBarcode').value='';
-}
+async function startScan(){try{if(!window.ZXing||!ZXing.BrowserMultiFormatReader){alert('کتابخانه اسکن بارگذاری نشد. اینترنت گوشی را بررسی کنید و دوباره تلاش کنید.');return}$('scanner').style.display='block';$('status').textContent='در حال باز کردن دوربین...';codeReader=new ZXing.BrowserMultiFormatReader();await codeReader.decodeFromVideoDevice(undefined,$('video'),(result,error)=>{if(result){let value=String(result.getText()||'').trim();if(value){$('barcode').value=value;$('saleBarcode').value=value;$('status').textContent='کد با موفقیت خوانده شد.';stopScan()}}});$('status').textContent='QR یا بارکد خطی را کامل داخل تصویر بگیرید و چند لحظه ثابت نگه دارید.'}catch(e){$('status').textContent='اسکن شروع نشد: '+(e.message||e);stopScan()}}
+function stopScan(){if(codeReader){try{codeReader.reset()}catch(e){}codeReader=null}$('scanner').style.display='none'}
+function addToCart(){let code=$('saleBarcode').value.trim(),p=products.find(x=>x.barcode===code),q=Math.max(1,Number($('qty').value)||1);if(!p){alert('کالایی با این بارکد پیدا نشد.');return}if(q>p.stock){alert('موجودی کافی نیست.');return}let item=cart.find(x=>x.barcode===code);if(item)item.qty+=q;else cart.push({barcode:code,name:p.name,price:p.price,qty:q});renderCart();$('saleBarcode').value=''}
 function renderCart(){$('cart').innerHTML=cart.map((x,i)=>`<p>${esc(x.name)} × ${fmt(x.qty)} — ${fmt(x.price*x.qty)} تومان <button class="danger" onclick="cart.splice(${i},1);renderCart()">حذف</button></p>`).join('');$('sum').textContent='جمع: '+fmt(cart.reduce((s,x)=>s+x.price*x.qty,0))+' تومان'}
 function checkout(){if(!cart.length){alert('فاکتور خالی است.');return}cart.forEach(x=>{let p=products.find(p=>p.barcode===x.barcode);if(p)p.stock-=x.qty});let total=cart.reduce((s,x)=>s+x.price*x.qty,0);persist();alert('فروش ثبت شد. مبلغ: '+fmt(total)+' تومان');cart=[];renderCart()}
 function printInvoice(){if(!cart.length){alert('فاکتور خالی است.');return}let w=window.open('','_blank');w.document.write('<meta charset="utf-8"><h2>گهر مارکت</h2>'+cart.map(x=>`<p>${esc(x.name)} × ${x.qty} — ${fmt(x.price*x.qty)} تومان</p>`).join('')+'<h3>'+ $('sum').textContent+'</h3>');w.document.close();w.print()}
 function backup(){let blob=new Blob([JSON.stringify(products,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ghermarket-backup.json';a.click();URL.revokeObjectURL(a.href)}
 function restore(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d))throw 0;products=d;persist();alert('پشتیبان بازیابی شد.')}catch(_){alert('فایل پشتیبان معتبر نیست.')}};r.readAsText(f)}
-renderProducts();renderCart();
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+renderProducts();renderCart();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script></body></html>
