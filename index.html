@@ -138,12 +138,12 @@ function editProduct(i){
 }
 function findSaleProduct(){
   const code=$('saleBarcode').value.trim();
-  if(!code){selectedProduct=null;$('foundProduct').innerHTML='';return false}
+  if(!code){alert('بارکد را وارد یا اسکن کنید.');return}
   const p=products.find(x=>String(x.barcode)===code);
   if(!p){
     selectedProduct=null;
     $('foundProduct').innerHTML='<div class="product-found">کالایی با این کد پیدا نشد. ابتدا آن را در بخش «افزودن کالا» ثبت کنید.</div>';
-    return false;
+    return;
   }
   selectedProduct=p;
   $('foundProduct').innerHTML=`<div class="product-found">
@@ -151,62 +151,40 @@ function findSaleProduct(){
     <span class="pill">قیمت: ${fmt(p.price)} تومان</span>
     <span class="pill">موجودی: ${fmt(p.stock)}</span>
     <div class="small">کد کالا: ${esc(p.barcode)}</div>
+    <button onclick="addSelectedToCart()">افزودن به فاکتور</button>
   </div>`;
-  return true;
 }
 function addSelectedToCart(){
-  if(!selectedProduct){
-    if(!findSaleProduct())return false;
-  }
+  if(!selectedProduct){findSaleProduct();return}
   const p=products.find(x=>String(x.barcode)===String(selectedProduct.barcode));
-  if(!p){
-    selectedProduct=null;
-    $('foundProduct').innerHTML='<div class="product-found">این کالا در فهرست پیدا نشد.</div>';
-    return false;
-  }
+  if(!p){alert('این کالا در فهرست پیدا نشد.');return}
   const q=Math.max(1,Math.floor(Number($('qty').value)||1));
   const item=cart.find(x=>String(x.barcode)===String(p.barcode));
   const already=item?item.qty:0;
-  if(already+q>p.stock){
-    if($('scanner').style.display!=='none')$('status').textContent='موجودی کافی نیست؛ موجودی باقی‌مانده: '+fmt(Math.max(0,p.stock-already));
-    else alert('موجودی کافی نیست. موجودی باقی‌مانده: '+fmt(Math.max(0,p.stock-already)));
-    return false;
-  }
+  if(already+q>p.stock){alert('موجودی کافی نیست. موجودی باقی‌مانده: '+fmt(Math.max(0,p.stock-already)));return}
   if(item)item.qty+=q;
   else cart.push({barcode:p.barcode,name:p.name,price:Number(p.price)||0,qty:q});
   renderCart();
   $('saleBarcode').value='';$('qty').value='1';$('foundProduct').innerHTML='';
   selectedProduct=null;
-  if($('scanner').style.display!=='none')$('status').textContent='دینگ! '+p.name+' به فاکتور اضافه شد؛ بارکد کالای بعدی را اسکن کنید.';
-  return true;
+  if($('scanner').style.display!=='none') $('status').textContent='کالا به فاکتور اضافه شد؛ بارکد کالای بعدی را اسکن کنید.';
 }
-let scanAudioContext=null;
 function playBeep(){
   try{
-    const ctx=scanAudioContext;
-    if(!ctx)return;
-    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
-    const osc=ctx.createOscillator(),gain=ctx.createGain();
-    const t=ctx.currentTime;
-    osc.type='triangle';
-    osc.frequency.setValueAtTime(1140,t);
-    gain.gain.setValueAtTime(0.0001,t);
-    gain.gain.exponentialRampToValueAtTime(0.30,t+0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
-    osc.connect(gain);gain.connect(ctx.destination);
-    osc.start(t);osc.stop(t+0.15);
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx)return;
+    const ctx=new AudioCtx(),osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='sine';osc.frequency.value=880;
+    gain.gain.setValueAtTime(0.0001,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.18,ctx.currentTime+0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.16);
+    osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+0.17);
+    osc.onended=()=>ctx.close();
   }catch(e){}
 }
 async function startScan(mode='sale'){
   if(codeReader){stopScan()}
   scanMode=mode;lastScannedCode='';lastScannedAt=0;
-  try{
-    const AudioCtx=window.AudioContext||window.webkitAudioContext;
-    if(AudioCtx){
-      if(!scanAudioContext)scanAudioContext=new AudioCtx();
-      if(scanAudioContext.state==='suspended')await scanAudioContext.resume();
-    }
-  }catch(e){}
   if(!window.ZXing||!ZXing.BrowserMultiFormatReader){
     alert('کتابخانه اسکن بارگذاری نشد. اینترنت گوشی را بررسی کنید و دوباره تلاش کنید.');return;
   }
@@ -227,7 +205,7 @@ async function startScan(mode='sale'){
       const value=String(result.getText()||'').trim();
       if(!value)return;
       const now=Date.now();
-      if(value===lastScannedCode && now-lastScannedAt<1800)return;
+      if(value===lastScannedCode && now-lastScannedAt<1600)return;
       lastScannedCode=value;lastScannedAt=now;
       playBeep();
       if(scanMode==='product'){
@@ -242,11 +220,8 @@ async function startScan(mode='sale'){
         }
       }else{
         $('saleBarcode').value=value;
-        if(findSaleProduct()){
-          if(!addSelectedToCart())$('status').textContent='کالا پیدا شد، اما به فاکتور اضافه نشد؛ موجودی را بررسی کنید.';
-        }else{
-          $('status').textContent='این بارکد در فهرست کالاها ثبت نشده است؛ ابتدا کالا را ثبت کنید.';
-        }
+        findSaleProduct();
+        $('status').textContent='دینگ! کد خوانده شد. مشخصات کالا را بررسی و «افزودن به فاکتور» را بزنید؛ اسکنر باز می‌ماند.';
       }
     });
     $('status').textContent='دوربین آماده است؛ QR یا بارکد را مقابل دوربین بگیرید.';
