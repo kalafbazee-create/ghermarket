@@ -43,6 +43,11 @@ video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:
 <button id="tabInvoice" class="secondary" onclick="showPage('invoicePage')">صدور فاکتور</button>
 </nav>
 <main>
+<div id="scanner" class="card" style="display:none">
+<video id="video" playsinline muted></video>
+<div id="status" class="small">کد را مقابل دوربین بگیرید.</div>
+<button class="secondary" onclick="stopScan()">بستن دوربین</button>
+</div>
 <div id="productsPage">
 <section class="card">
 <h2>افزودن یا ویرایش کالا</h2>
@@ -51,11 +56,7 @@ video{width:100%;max-height:320px;background:#111;border-radius:10px;object-fit:
 <input id="barcode" placeholder="بارکد را وارد یا اسکن کنید">
 <button onclick="startScan('product')">اسکن QR و بارکد</button>
 </div>
-<div id="scanner" class="card">
-<video id="video" playsinline muted></video>
-<div id="status" class="small">کد را مقابل دوربین بگیرید.</div>
-<button class="secondary" onclick="stopScan()">بستن دوربین</button>
-</div>
+
 <label>نام کالا</label><input id="name" placeholder="مثلاً نوشابه">
 <div class="row">
 <div><label>قیمت فروش (تومان)</label><input id="price" type="number" min="0"></div>
